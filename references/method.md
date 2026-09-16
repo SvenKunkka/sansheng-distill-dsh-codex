@@ -251,7 +251,7 @@ xray 餐巾纸是「公式 + 读法段 + 一句话 + 草图」四件套;v1-v3 �
 
 1. **分组**:按章切组,**每组 ≤5 章**;每组派 1 个 subagent(全 Opus),各拿「本组各章 Pass 1 骨架 + 本组原文切片」。**并发上限**:全局在飞的 Pass2 subagent **≤ 6-8**(批量多本时跨会话统算,见 SKILL `§批量模式` 并发闸),别一次性起满所有组、别多作者同时段并跑(会引爆 529 风暴)。
 2. **组内串行**:subagent 组内逐章写 narrative + excerpts(串行,保上下文连贯),不跳章。
-3. **产物落盘·统一命名(硬)**:每组写 **`$DATA\{书目录}\_pass2_g{N}.json`**(N=组序,连续)。**只用这一套命名**——禁 `_ch_N` / `_pass2_N` / `_pass2_batchX` 等即兴变体(并发多会话命名漂移会致合并对不齐、掉章;复盘曾四套并存)。
+3. **产物落盘·统一命名(硬)**:每组写 **`$DATA/{书目录}/_pass2_g{N}.json`**(N=组序,连续)。**只用这一套命名**——禁 `_ch_N` / `_pass2_N` / `_pass2_batchX` 等即兴变体(并发多会话命名漂移会致合并对不齐、掉章;复盘曾四套并存)。
 4. **主控合并 + 完整性门禁(硬)**:各组 `_pass2_g*.json` 回填 `distill.json` 对应 `chapters[].no`,主控做:
    - **合并完整性断言**:回填后核「`chapters[].no` 全齐(1..总章数无缺)+ 每章 narrative 达 G9 字数下限 + 书籍每章 G14 excerpts」。缺口**只对缺章定点 gap-fill**(补派一个只写缺章的 subagent),**禁整组重跑**。
    - **失败先核盘再重派**:某组 subagent 报「失败 / 无 result」时,**先看它的 `_pass2_g{N}.json` 是否已落盘**——已落盘且完整就直接用,别被「无 result」骗去整组重跑(复盘中吴晓波 23 个「无 result」的 agent 多已写盘、只是返回元数据被限流,整组重派 = 纯浪费)。
@@ -869,17 +869,17 @@ R3「知识连接」提出的每个可复用概念写进 `concepts[] = {concept,
 
 | skill | 干什么 | YouTube 免下载 | 何时用 |
 |---|---|---|---|
-| **video-to-subtitle-summary**(vendor,`~/.claude/skills/`) | 出字幕/转写文本(yt-dlp 抓字幕 / faster-whisper ASR / AI Douyin 下载非 YT) | ✅ 抓字幕 | **默认**:口播/知识型,转写就是价值 |
+| **video-to-subtitle-summary**(vendor,装在 `$SKILLS_HOME` 下) | 出字幕/转写文本(yt-dlp 抓字幕 / faster-whisper ASR / AI Douyin 下载非 YT) | ✅ 抓字幕 | **默认**:口播/知识型,转写就是价值 |
 | **sansheng-gemini-video**(可选外部依赖) | Gemini 原生看画面+音频 -> 转写/结构化理解 | ✅ `fileData.fileUri` 在线看 | **无字幕 / 需画面语义**(演示/代码/图表/PPT) |
 
 **取材 cascade(按平台分流,能不下载就不下载):**
 
 ▎**YouTube**(在线优先)
-1. 抓字幕:`python ~/.claude/skills/video-to-subtitle-summary/scripts/download_youtube_subtitles.py <url> --output-dir raw/{NN}_{id} --languages <manuallang>,en-US,en,zh-Hans`。
+1. 抓字幕:`python $SKILLS_HOME/video-to-subtitle-summary/scripts/download_youtube_subtitles.py <url> --output-dir raw/{NN}_{id} --languages <manuallang>,en-US,en,zh-Hans`。
 2. **认准【人工】字幕作转写源**:人工字幕文件(如 `subtitle.en-US.vtt`)一句一 cue、**无 `<...><c>` 内联词级标签、无 `align:/position:` 参数、无连续重复行**;VTT 可**直喂 build_series**(`SRT_TIME` 正则 `[,.]` 两用,兼容 vtt 毫秒点)。
    - ⚠️ **坑(Q6-4)**:`Kind: captions` 头**人工/自动都有,不能作判据**;脚本默认落地的 `text.txt`/`subtitle.srt` 常取**自动字幕**,带 `<c>` 词级标签 + 滚动重复约 **3×**(字数虚高 2-3 倍)。**别用 text.txt 当转写源**;快速判真:字数 ≈ 时长×(英文 ~150 / 中文 ~250)wpm 才对,2-3× 于此即为自动字幕。
 3. 只有【自动】字幕(无人工)-> 抓下来**必须去重**:去 `<...>` 标签 + 去 `align:/position:` + 折叠连续重复行,再喂 build_series。
-4. 无字幕 OR 需画面语义 -> `python ~/.claude/skills/sansheng-gemini-video/scripts/analyze_video.py <url> --prompt "逐字转写带[MM:SS],逐字照录不总结" --fps 0.2 --start/--end`(低 fps + 裁片段控成本;实测 ~$0.01/2min,40min ≈ $0.2;转写质量实测 ≈ 人工字幕)。
+4. 无字幕 OR 需画面语义 -> `python $SKILLS_HOME/sansheng-gemini-video/scripts/analyze_video.py <url> --prompt "逐字转写带[MM:SS],逐字照录不总结" --fps 0.2 --start/--end`(低 fps + 裁片段控成本;实测 ~$0.01/2min,40min ≈ $0.2;转写质量实测 ≈ 人工字幕)。
 5. 兜底 -> 下载音频 + faster-whisper(`ASR_BACKEND=faster-whisper`)。
 
 ▎**非 YouTube**(B站/抖音/小红书:**先下载再解析**)

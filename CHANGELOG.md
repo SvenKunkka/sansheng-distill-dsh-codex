@@ -4,6 +4,25 @@
 
 ## [未发布]
 
+### 追加：DSH / Codex 平台适配（移植版）
+
+把原版 Claude Code skill 移植成 **DSH / Codex / Claude Code 三端通用**。**方法论、管线、门禁、脚本、references 内容零改动**;改动仅限平台层,故不升版本号。
+
+**跨平台路径**
+- 全文 121 处 Windows 反斜杠路径(`$SKILL\scripts\x.py`、`$DATA\{书目录}\...`)改为正斜杠,在 macOS / Linux / Windows(PowerShell、Git Bash)下统一可跑。**只动路径分隔符** —— 正则转义(`\d`/`\w`)、markdown 转义、shell 行尾续行符(`\`)一律未动。
+- `$SKILL` 定义从硬编码 `~/.claude/skills/sansheng-distill` 改为「本 `SKILL.md` 所在目录」;新增 `$SKILLS_HOME`(各平台 skills 根)供配套 skill 拼路径,`method.md §V.0` 的两处 `~/.claude/skills/` 引用随之平台中立化。
+
+**工具映射(`references/platform-adapters.md`,新增)**
+- 一张表钉死三端工具对应:`Task` → DSH `subagent` / Codex `spawn_agent`;`WebSearch` → `web_search`;`WebFetch` → DSH `web_fetch` / Codex `curl`;`TodoWrite` → `todo_write` / `update_plan`;文件与 shell 工具同理。
+- 联网检索降级链(中文广搜 → 英文深搜 → 兜底,失败即降级、外证须带可点击 URL)**语义三端一致**,只换引擎名。
+- **Codex 的 `spawn_agent` 默认关闭**(需 `[features] multi_agent = true`)。文档明确:不开**不许跳过 Pass2**,改为主控串行逐组执行,产物命名(`_pass2_gN.json`)与全部质量门禁不变,只是墙钟变长 —— 避免把「平台限制」误读成「可以省这一步」。
+
+**安装与文档**
+- 新增 `platforms/install.sh` 共享安装器(软链 / `--copy` / `--force` / `--uninstall`,`DSH_AGENTS_HOME`、`CODEX_HOME`、`CLAUDE_HOME` 可覆盖),`platforms/dsh/install.sh` 与 `platforms/codex/install.sh` 为薄封装。
+- README / README_EN 安装章节重写为三端并列,并加「本仓是移植版、方法与版权归原作者叁笙、上游为准」的显式声明。
+
+**验证**:`python -m pytest scripts/tests` → **296 passed**(与移植前基线一致,路径改动未触任何脚本逻辑);安装器 11 条路径(安装 / 拒绝覆盖 / `--force` / `--copy` / `--uninstall` / 非法平台 exit 2 / 缺 `--platform` exit 2 / `--help`)全部符合预期;`sansheng-distill` 通过 DSH 的 `^[a-z0-9]+(?:-[a-z0-9]+)*$` 技能名校验。
+
 补三道**未填槽门禁**、一道**批量交付闸**,并新增轻量模型执行卡 -- 让 Gemini Flash 级模型 / 弱 agent 客户端也能按本 skill 的标准产出合格蒸馏页。
 
 ### 追加：公开出处脱敏门禁（2026-07-28）

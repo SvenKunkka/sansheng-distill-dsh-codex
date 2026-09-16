@@ -4,6 +4,10 @@
 
 **中文** | [English](./README_EN.md)
 
+> **本仓是什么**:这是 [叁笙 (sansheng)](https://github.com/sandypoli-boop/sansheng-distill) 原版 Claude Code skill 的 **DSH / Codex 适配版**。
+> 蒸馏方法、管线、门禁、脚本与 references **全部来自原作者**,本仓所做的只是**平台移植**:路径跨平台化(Windows `\` → `/`)、工具名映射(`Task`/`WebSearch`/`WebFetch` → 各平台等价工具)、安装脚本与三端说明。
+> **方法是叁笙的,移植是后加的** —— 上游仓仍是权威版本,内容更新以[上游](https://github.com/sandypoli-boop/sansheng-distill)为准。许可见 [MIT](./LICENSE)。
+
 <p align="center">
   <img src="assets/demo.gif" alt="用蒸馏 skill 处理尤瓦尔·赫拉利四本书的成品演示" width="100%">
   <br>
@@ -53,27 +57,65 @@
 
 ## 什么时候用
 
-对 Claude 说 *"蒸馏这本书"* *"拆这本书"* *"distill this book"* *"蒸馏这个视频系列"*,或直接丢一个电子书文件让它做蒸馏页 —— Claude 会接起这个 skill,跑完整条管线。
+对 DSH / Codex / Claude 说 *"蒸馏这本书"* *"拆这本书"* *"distill this book"* *"蒸馏这个视频系列"*,或直接丢一个电子书文件让它做蒸馏页 —— agent 会接起这个 skill,跑完整条管线。
 
 **不适合**:写文章、剪视频、只想要字幕或一段普通摘要。
 
 ## 安装
 
-作为 Claude Code plugin(推荐):
+本 skill **三端通用** —— 同一份目录,放进各平台的 skills 根即可。管线、门禁、脚本、references 完全共用;三端差异只在「装在哪、工具叫什么名」,全部写在 [`references/platform-adapters.md`](./references/platform-adapters.md)。
+
+### DSH
+
+```bash
+git clone https://github.com/SvenKunkka/sansheng-distill-dsh-codex.git
+cd sansheng-distill-dsh-codex
+bash platforms/dsh/install.sh          # 软链到 ~/.agents/skills/sansheng-distill
+```
+
+想装到别处,设 `DSH_AGENTS_HOME` 后重跑;加 `--copy` 改为复制安装,`--uninstall` 卸载。重启 DSH 即被发现。
+
+### Codex
+
+```bash
+git clone https://github.com/SvenKunkka/sansheng-distill-dsh-codex.git
+cd sansheng-distill-dsh-codex
+bash platforms/codex/install.sh        # 软链到 ~/.codex/skills/sansheng-distill
+```
+
+建议在 `~/.codex/config.toml` 里打开这两项(不开也能用,见下方说明):
+
+```toml
+[features]
+multi_agent = true     # 让 Step2·Pass2 能 spawn_agent 并行 fan-out
+web_search  = "live"   # 让 Step3 联网增补有实时搜索
+```
+
+> **`multi_agent` 不开会怎样**:Codex 的 `spawn_agent` 默认关闭。关着的时候**不要跳过 Pass2**,改为**主控串行逐组执行**(每组仍守 ≤5 章与全部质量门禁),产物与命名纪律完全不变,只是墙钟变长。`web_search` 不设为 `live`(默认 `indexed`)时走缓存索引搜索,Step3 仍可用。
+
+### Claude Code
+
+作为 plugin(推荐),或手动软链:
 
 ```bash
 claude plugin marketplace add sandypoli-boop/sansheng-distill
 claude plugin install sansheng-distill
+
+# 或手动
+git clone https://github.com/SvenKunkka/sansheng-distill-dsh-codex.git
+ln -s "$PWD/sansheng-distill-dsh-codex" ~/.claude/skills/sansheng-distill
 ```
 
-或手动:clone 后软链进 `~/.claude/skills/`:
+然后重启对应的客户端。
+
+### 依赖
 
 ```bash
-git clone https://github.com/sandypoli-boop/sansheng-distill.git
-ln -s "$PWD/sansheng-distill" ~/.claude/skills/sansheng-distill
+pip install ebooklib beautifulsoup4 pymupdf pillow playwright pytest
+playwright install chromium     # Step7 出厂验证需要
 ```
 
-然后重启 Claude Code。
+`.azw3` / `.mobi` 输入另需 calibre 的 `ebook-convert`;视频系列路径另需 `yt-dlp`。环境变量见 [`.env.example`](./.env.example),**三端通用**。
 
 ### 国内加速下载
 
@@ -81,7 +123,7 @@ GitHub 直连不畅时，给 clone 地址前面加一层公共镜像即可（下
 
 ```bash
 # 加速 clone（把 gh-proxy.com 换成 ghfast.top 即备用镜像）
-git clone https://gh-proxy.com/https://github.com/sandypoli-boop/sansheng-distill.git
+git clone https://gh-proxy.com/https://github.com/SvenKunkka/sansheng-distill-dsh-codex.git
 ```
 
 插件市场方式暂无稳定国内镜像；网络不畅时用上面的加速 clone + 软链。
@@ -90,10 +132,11 @@ git clone https://gh-proxy.com/https://github.com/sandypoli-boop/sansheng-distil
 
 升级到新版，取决于你当初怎么装的：
 
-- **插件市场装的**：`claude plugin marketplace update` 刷新市场，再 `claude plugin update sansheng-distill`
-- **clone + 软链装的**：进本仓目录 `git pull`（软链即时生效，不必重装、不必重连）
+- **clone + 软链装的（DSH / Codex 默认）**：进本仓目录 `git pull`（软链即时生效，不必重装、不必重连）
+- **`--copy` 装的**：进本仓 `git pull` 后重跑一次 `bash platforms/<平台>/install.sh --copy --force`
+- **Claude Code 插件市场装的**：`claude plugin marketplace update` 刷新市场，再 `claude plugin update sansheng-distill`
 
-**怎么知道有新版**：看本仓 [Releases](../../releases)；点仓库右上角 **Watch → Custom → Releases**，发新版时 GitHub 会通知你。每版改了什么见 [CHANGELOG](CHANGELOG.md)。
+**怎么知道有新版**：看本仓 [Releases](../../releases)；点仓库右上角 **Watch → Custom → Releases**，发新版时 GitHub 会通知你。每版改了什么见 [CHANGELOG](CHANGELOG.md)。**上游方法论的更新以[上游仓](https://github.com/sandypoli-boop/sansheng-distill)为准。**
 
 ## 快速上手
 
@@ -104,7 +147,7 @@ playwright install chromium
 cp .env.example .env        # 然后填 DISTILL_DATA_DIR(蒸视频再填视频那几个 key)
 ```
 
-然后在 Claude Code 里让它蒸一本书即可。八步管线(Step0-Step7)写在 [`SKILL.md`](./SKILL.md),每步细则在 [`references/`](./references/) 下。
+然后在你的 agent（DSH / Codex / Claude Code）里让它蒸一本书即可。八步管线(Step0-Step7)写在 [`SKILL.md`](./SKILL.md),每步细则在 [`references/`](./references/) 下,**平台工具映射在 [`references/platform-adapters.md`](./references/platform-adapters.md)**。
 
 ## 配置
 

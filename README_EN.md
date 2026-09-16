@@ -4,6 +4,10 @@
 
 [中文](./README.md) | **English**
 
+> **What this repo is**: the **DSH / Codex port** of [叁笙 (sansheng)](https://github.com/sandypoli-boop/sansheng-distill)'s original Claude Code skill.
+> The distillation method, pipeline, gates, scripts, and references are **entirely the original author's work**. This repo only does the **platform port**: cross-platform paths (Windows `\` -> `/`), tool-name mapping (`Task` / `WebSearch` / `WebFetch` -> each platform's equivalent), install scripts, and three-platform docs.
+> **The method is sansheng's; the port is an addition.** The upstream repo remains authoritative for content updates -- see [upstream](https://github.com/sandypoli-boop/sansheng-distill). Licensed [MIT](./LICENSE).
+
 <p align="center">
   <img src="assets/demo.gif" alt="Demo: distilling Yuval Noah Harari's four books with this skill" width="100%">
   <br>
@@ -53,36 +57,75 @@ When you distill a whole set (like Harari's four), it also synthesizes an **auth
 
 ## When to use
 
-Say *"distill this book"*, *"拆这本书"*, *"distill this video series"*, or just drop an ebook file and ask for a distillation page -- Claude picks up this skill and runs the whole pipeline.
+Say *"distill this book"*, *"拆这本书"*, *"distill this video series"*, or just drop an ebook file and ask for a distillation page -- the agent picks up this skill and runs the whole pipeline.
 
 **Not** for: writing an article, editing a video, or just wanting subtitles or a plain summary.
 
 ## Install
 
-As a Claude Code plugin (recommended):
+This skill works on **DSH, Codex, and Claude Code** from one directory -- drop it into the platform's skills root. The pipeline, gates, scripts, and references are shared; only "where it installs" and "what the tools are called" differ. Both are documented in [`references/platform-adapters.md`](./references/platform-adapters.md).
+
+### DSH
+
+```bash
+git clone https://github.com/SvenKunkka/sansheng-distill-dsh-codex.git
+cd sansheng-distill-dsh-codex
+bash platforms/dsh/install.sh          # symlinks into ~/.agents/skills/sansheng-distill
+```
+
+Set `DSH_AGENTS_HOME` to install elsewhere; add `--copy` to copy instead of symlink, `--uninstall` to remove. Restart DSH and it is discovered.
+
+### Codex
+
+```bash
+git clone https://github.com/SvenKunkka/sansheng-distill-dsh-codex.git
+cd sansheng-distill-dsh-codex
+bash platforms/codex/install.sh        # symlinks into ~/.codex/skills/sansheng-distill
+```
+
+Recommended additions to `~/.codex/config.toml` (optional -- see the note below):
+
+```toml
+[features]
+multi_agent = true     # lets Step2 Pass2 spawn_agent fan out in parallel
+web_search  = "live"   # gives Step3 enrichment live web search
+```
+
+> **Without `multi_agent`**: Codex keeps `spawn_agent` disabled. Do **not** skip Pass2 -- instead run the groups **serially from the main thread** (still max 5 chapters per group, all quality gates unchanged). Artifacts and naming discipline are identical; only wall-clock time grows. Without `web_search = "live"` (default is `indexed`) search uses a cached index, and Step3 still works.
+
+### Claude Code
+
+As a plugin (recommended), or symlink manually:
 
 ```bash
 claude plugin marketplace add sandypoli-boop/sansheng-distill
 claude plugin install sansheng-distill
+
+# or manually
+git clone https://github.com/SvenKunkka/sansheng-distill-dsh-codex.git
+ln -s "$PWD/sansheng-distill-dsh-codex" ~/.claude/skills/sansheng-distill
 ```
 
-Or manually: clone and symlink into `~/.claude/skills/`:
+Then restart the client.
+
+### Dependencies
 
 ```bash
-git clone https://github.com/sandypoli-boop/sansheng-distill.git
-ln -s "$PWD/sansheng-distill" ~/.claude/skills/sansheng-distill
+pip install ebooklib beautifulsoup4 pymupdf pillow playwright pytest
+playwright install chromium     # needed by the Step7 factory verification
 ```
 
-Then restart Claude Code.
+`.azw3` / `.mobi` input also needs calibre's `ebook-convert`; the video-series path also needs `yt-dlp`. Environment variables are in [`.env.example`](./.env.example) and are **identical across all three platforms**.
 
 ## Updating
 
 How you update depends on how you installed:
 
-- **Via the plugin marketplace**: `claude plugin marketplace update`, then `claude plugin update sansheng-distill`
-- **Via clone + symlink**: `git pull` in the repo -- the symlink picks it up immediately, no reinstall
+- **Via clone + symlink (the DSH / Codex default)**: `git pull` in the repo -- the symlink picks it up immediately, no reinstall
+- **Via `--copy`**: `git pull`, then re-run `bash platforms/<platform>/install.sh --copy --force`
+- **Via the Claude Code plugin marketplace**: `claude plugin marketplace update`, then `claude plugin update sansheng-distill`
 
-To hear about new versions: watch the repo's [Releases](../../releases), or click **Watch -> Custom -> Releases** and GitHub will notify you. See the [CHANGELOG](CHANGELOG.md) for what changed in each version.
+To hear about new versions: watch the repo's [Releases](../../releases), or click **Watch -> Custom -> Releases** and GitHub will notify you. See the [CHANGELOG](CHANGELOG.md) for what changed in each version. **Upstream methodology updates are authoritative; follow the [upstream repo](https://github.com/sandypoli-boop/sansheng-distill).**
 
 ## Quick start
 
@@ -93,7 +136,7 @@ playwright install chromium
 cp .env.example .env        # then set DISTILL_DATA_DIR (and the video keys if you use the video path)
 ```
 
-Then, in Claude Code, just ask it to distill a book. The pipeline (Step0-Step7) is in [`SKILL.md`](./SKILL.md); each step's details live under [`references/`](./references/).
+Then, in your agent (DSH / Codex / Claude Code), just ask it to distill a book. The pipeline (Step0-Step7) is in [`SKILL.md`](./SKILL.md); each step's details live under [`references/`](./references/); the platform tool mapping is in [`references/platform-adapters.md`](./references/platform-adapters.md).
 
 ## Configuration
 
