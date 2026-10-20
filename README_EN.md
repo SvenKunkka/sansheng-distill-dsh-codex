@@ -192,3 +192,10 @@ This distillation approach didn't come from nowhere; we studied and blended less
 ## License
 
 [MIT](LICENSE) © 2026 叁笙 (sansheng)
+
+
+<!-- SVENKUNKKA-CONTACT:BEGIN -->
+
+**仓库维护者 / Repository maintainer:** [SvenKunkka](https://github.com/SvenKunkka) · [X / Twitter](https://x.com/Svenu1s5)
+
+<!-- SVENKUNKKA-CONTACT:END -->

@@ -1,3 +1,7 @@
+<!-- SVENKUNKKA-README-NAV:BEGIN -->
+[中文项目说明](#project-overview-zh) · [English overview](#project-overview-en) · [维护者 X / Maintainer on X](https://x.com/Svenu1s5)
+<!-- SVENKUNKKA-README-NAV:END -->
+
 # sansheng-distill · 书籍蒸馏引擎
 
 > 把一本书(或一组视频),熬成一张能点、能跳、越读越厚的**单文件交互网页**。
@@ -203,3 +207,30 @@ cp .env.example .env        # 然后填 DISTILL_DATA_DIR(蒸视频再填视频�
 ## License
 
 [MIT](LICENSE) © 2026 叁笙 (sansheng)
+
+
+---
+
+<!-- SVENKUNKKA-PROJECT-INFO:BEGIN -->
+
+<a id="project-overview-zh"></a>
+## 中文项目说明
+
+叁笙 sansheng-distill 的 DSH/Codex 适配版，把书籍或视频系列整理为单文件交互知识网页，包含章节精读、思维导图和跨书关联。蒸馏方法与管线来自原作者，本仓主要增加平台移植。
+
+**使用入口：** 按 [中文说明](README.md) 或 [English](README_EN.md) 安装依赖；Codex 使用 `bash platforms/codex/install.sh`，DSH 使用对应安装脚本。
+
+**范围说明：** 上游仍是方法与内容更新的权威来源；生成页面用于辅助理解，不替代原书，视频及特殊电子书格式另有依赖。
+
+<a id="project-overview-en"></a>
+## English project overview
+
+A DSH/Codex adaptation of sansheng’s sansheng-distill, turning books or video series into single-file interactive knowledge pages with chapter readings, mind maps and cross-book links. The methodology and pipeline belong to the original author; this repository mainly adds platform adaptation.
+
+**Getting started:** Follow [中文](README.md) or [English](README_EN.md) for dependencies. Install for Codex with `bash platforms/codex/install.sh`, or use the corresponding DSH installer.
+
+**Scope:** Upstream remains authoritative for methodology and content updates. Generated pages aid understanding rather than replace the source book; videos and certain ebook formats require additional dependencies.
+
+**仓库维护者 / Repository maintainer:** [SvenKunkka](https://github.com/SvenKunkka) · [X / Twitter](https://x.com/Svenu1s5)
+
+<!-- SVENKUNKKA-PROJECT-INFO:END -->
